@@ -4,7 +4,7 @@ import java.lang.Double;
 public class ZipDistCalc {
 	
 	//from: http://zips.sourceforge.net/
-	public double calcDistance(double latA, double longA, double latB, double longB)
+	public static double calcDistance(double latA, double longA, double latB, double longB)
 	{
 	  double theDistance = (Math.sin(Math.toRadians(latA)) *
 	                        Math.sin(Math.toRadians(latB)) +
