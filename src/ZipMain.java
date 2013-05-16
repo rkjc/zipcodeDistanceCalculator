@@ -34,7 +34,8 @@ public class ZipMain {
 
 		MongoClient mongoClient = new MongoClient("localhost");
 
-		DB db = mongoClient.getDB("ziptest");
+		//DB db = mongoClient.getDB("ziptest");
+		DB db = mongoClient.getDB("massive");
 
 		DBCollection coll = db.getCollection("zipcodeLocations");
 
@@ -49,7 +50,7 @@ public class ZipMain {
 
 		// run this once at the beginning of development session
 		// DataManage.loadZipFileIntoDB();
-		DataManage.loadZipFileIntoMassive();
+		//DataManage.loadZipFileIntoMassive();
 		//DataManage.makeCAzips();
 		
 		// make an arraylist of all the stores
@@ -61,7 +62,7 @@ public class ZipMain {
 
 
 		//get hashMap of zipcodes and distances within distance dist from zipcode zip (zip, dist)
-		HashMap<Integer, Double> zipDist = getZipcodeDistanceHahMap(90032, 12.0);
+		HashMap<Integer, Double> zipDist = getZipcodeDistanceHashMap(90032, 12.0);
 		
 		System.out.println("zipDist hashMap = " + zipDist);
 		System.out.println("zipDist hashMap size = " + zipDist.size());
@@ -118,7 +119,7 @@ public class ZipMain {
 		System.out.println("end of main");
 	}
 
-	public static HashMap<Integer, Double> getZipcodeDistanceHahMap(Integer thisZip, Double dist) throws Exception{
+	public static HashMap<Integer, Double> getZipcodeDistanceHashMap(Integer thisZip, Double dist) throws Exception{
 		MongoClient mongoClient = new MongoClient("localhost");
 		DB db = mongoClient.getDB("ziptest");
 		DBCollection coll = db.getCollection("zipcodeLocations");

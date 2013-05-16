@@ -3,6 +3,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -243,49 +244,55 @@ public class DataManage {
 
 	}
 
-	public static void loadZipFileIntoDB() throws Exception {
+	public static void loadZipFileIntoDB() {
 		System.out.println("loading zipdata to DB");
 
-		MongoClient mongoClient = new MongoClient("localhost");
-
-		DB db = mongoClient.getDB("ziptest");
-
-		DBCollection coll = db.getCollection("zipcodeLocations");
-
-		Integer zip = 0;
-		Double lat = 0.0;
-		Double lon = 0.0;
-
-		// load the zipcode lat-lon table into mongodb database ziptest
-		File inFile = new File("zipLocs.csv");
-		if (inFile.isFile()) {
-			coll.drop();
-			try {
-				BufferedReader br = new BufferedReader(new FileReader(inFile));
-				String line = br.readLine();
-
-				while (line != null) {
-					// for(int i = 0; i < 1000; i++){
-					zip = Integer.valueOf(line.substring(0, 5));
-					lat = Double.valueOf(line.substring(6, 15));
-					lon = Double.valueOf(line.substring(16, 26).trim());
-
-					BasicDBObject doc = new BasicDBObject("zipcode", zip)
-							.append("latitude", lat).append("longitude", lon);
-
-					coll.insert(doc);
-					line = br.readLine();
+		MongoClient mongoClient;
+		try {
+			mongoClient = new MongoClient("localhost");
+		
+			DB db = mongoClient.getDB("ziptest");
+	
+			DBCollection coll = db.getCollection("zipcodeLocations");
+	
+			Integer zip = 0;
+			Double lat = 0.0;
+			Double lon = 0.0;
+	
+			// load the zipcode lat-lon table into mongodb database ziptest
+			File inFile = new File("zipLocs.csv");
+			if (inFile.isFile()) {
+				coll.drop();
+				try {
+					BufferedReader br = new BufferedReader(new FileReader(inFile));
+					String line = br.readLine();
+	
+					while (line != null) {
+						// for(int i = 0; i < 1000; i++){
+						zip = Integer.valueOf(line.substring(0, 5));
+						lat = Double.valueOf(line.substring(6, 15));
+						lon = Double.valueOf(line.substring(16, 26).trim());
+	
+						BasicDBObject doc = new BasicDBObject("zipcode", zip)
+								.append("latitude", lat).append("longitude", lon);
+	
+						coll.insert(doc);
+						line = br.readLine();
+					}
+	
+					br.close();
+	
+				} catch (Exception ex) {
+					ex.printStackTrace();
 				}
-
-				br.close();
-
-			} catch (Exception ex) {
-				ex.printStackTrace();
+			} else {
+				System.out.println("could not find file");
 			}
-		} else {
-			System.out.println("could not find file");
-		}
 
+		} catch (UnknownHostException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 	
 	public static void loadZipFileIntoMassive() throws Exception {
