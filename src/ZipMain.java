@@ -49,7 +49,9 @@ public class ZipMain {
 
 		// run this once at the beginning of development session
 		// DataManage.loadZipFileIntoDB();
-
+		DataManage.loadZipFileIntoMassive();
+		//DataManage.makeCAzips();
+		
 		// make an arraylist of all the stores
 		DBCursor myCursor;
 		myCursor = storesCollection.find();
@@ -57,100 +59,52 @@ public class ZipMain {
 		stores = myCursor.toArray();
 		myCursor.close();
 
-		// gets lat and lon for zipcode thisZip
-		Integer zip = 0;
-		Double lat = 0.0;
-		Double lon = 0.0;
-		DBCursor cursor;
-		Integer thisZip = 90032; // csula zipcode
-		BasicDBObject query = new BasicDBObject("zipcode", thisZip);
-		cursor = coll.find(query);
-		try {
-			while (cursor.hasNext()) {
-				BasicDBObject obj = (BasicDBObject) cursor.next();
-				zip = obj.getInt("zipcode");
-				lat = obj.getDouble("latitude");
-				lon = obj.getDouble("longitude");
-				// result.add(obj.getString("zipcode"));
-				// System.out.println(cursor.next());
-			}
-		} finally {
-			cursor.close();
-		}
 
-		System.out.println(zip);
-		System.out.println(lat);
-		System.out.println(lon);
-		System.out.println("");
-
-		// build a hashmap of zipcodes that meet the criteria
-		HashMap<Integer, Double> zipDist = new HashMap<Integer, Double>();
-		cursor = coll.find();
-		Double maxDistance = 12.0;
-		try {
-			// for(int i= 0; i < 50; i++){
-			while (cursor.hasNext()) {
-				BasicDBObject obj = (BasicDBObject) cursor.next();
-				Double distance = ZipDistCalc.calcDistance(lat, lon,
-						obj.getDouble("latitude"), obj.getDouble("longitude"));
-				if (distance < maxDistance) {
-					System.out.println("(Integer)obj.getInt(\"zipcode\")   "
-							+ (Integer) obj.getInt("zipcode"));
-					zipDist.put((Integer) obj.getInt("zipcode"), distance);
-				}
-			}
-		} finally {
-			cursor.close();
-		}
-
+		//get hashMap of zipcodes and distances within distance dist from zipcode zip (zip, dist)
+		HashMap<Integer, Double> zipDist = getZipcodeDistanceHahMap(90032, 12.0);
+		
 		System.out.println("zipDist hashMap = " + zipDist);
 		System.out.println("zipDist hashMap size = " + zipDist.size());
 
-		HashMap<Double, DBObject> distanceByStore = new HashMap<Double, DBObject>();
+		//HashMap<Double, DBObject> distanceByStore = new HashMap<Double, DBObject>();
 
-		String storeZipS = "";
+		//String storeZipS = "";
 		Integer storeZip = 0;
-		Double storeLat = 0.0;
-		Double storeLon = 0.0;
+		//Double storeLat = 0.0;
+		//Double storeLon = 0.0;
 
+		//List<DBObject> stores = new ArrayList<DBObject>(); filled with all stores
 		Iterator<DBObject> iterator = stores.iterator();
 		System.out.println("size of stores list = " + stores.size());
-		int i = 0;
+		Map<Double, DBObject> distanceByStore = new TreeMap<Double, DBObject>();
+
 		DBObject obj;
 		while (iterator.hasNext()) {
-			System.out.println(" i = " + i++);
-			// storeZip =
-			// Integer.getInteger(((iterator.next()).get("zipcode")).toString());
 			obj = iterator.next();
-			storeZipS = (String) (obj).get("zipcode");
-			storeZip = Integer.parseInt(storeZipS);
-			System.out.println("storeZipS var = " + storeZipS);
+			storeZip = Integer.parseInt((String) (obj).get("zipcode"));
 			System.out.println("zipDist contains " + storeZip + "  "
 					+ zipDist.containsKey(storeZip));
+			
 			if (zipDist.containsKey(storeZip)) {
 				System.out.println("distance to store = "
 						+ zipDist.get(storeZip));
 				distanceByStore.put(zipDist.get(storeZip), obj);
 			}
-
-			System.out.println(storeZipS);
+			
 			iterator.remove();
 		}
 
-		Map<Double, DBObject> treeMap = new TreeMap<Double, DBObject>(
-				distanceByStore);
-
 		ArrayList<DBObject> returnStores = new ArrayList<DBObject>();
 
-		for (Map.Entry<Double, DBObject> entry : treeMap.entrySet()) {
+		for (Map.Entry<Double, DBObject> entry : distanceByStore.entrySet()) {
 			Double key = entry.getKey();
 			System.out.println("\ndistance to store = " + key);
 			DBObject value = entry.getValue();
-			System.out.println(" store ID = " + value.toString());
+			System.out.println(" store ID = " + value.get("_id"));
 			returnStores.add(value);
 		}
 
-		System.out.println("\nreturnStores = " + returnStores);
+		//System.out.println("\nreturnStores = " + returnStores);
 		
 		// iterate through stores list
 		// check if hashmap zipDist contains that zip as key
@@ -162,13 +116,60 @@ public class ZipMain {
 		// System.out.println(zipDist);
 
 		System.out.println("end of main");
-
-		// double dist = ZipDistCalc.calcDistance(zip1, zip2);
-		// System.out.println("distance is " + dist);
 	}
 
-	public static void storeDBcollectionZipcode() {
+	public static HashMap<Integer, Double> getZipcodeDistanceHahMap(Integer thisZip, Double dist) throws Exception{
+		MongoClient mongoClient = new MongoClient("localhost");
+		DB db = mongoClient.getDB("ziptest");
+		DBCollection coll = db.getCollection("zipcodeLocations");
+		
+		// gets lat and lon for zipcode thisZip
+				Integer zip = 0;
+				Double lat = 0.0;
+				Double lon = 0.0;
+				DBCursor cursor;
+				//Integer thisZip = 90032; // csula zipcode
+				BasicDBObject query = new BasicDBObject("zipcode", thisZip);
+				cursor = coll.find(query);
+				try {
+					while (cursor.hasNext()) {
+						BasicDBObject obj = (BasicDBObject) cursor.next();
+						zip = obj.getInt("zipcode");
+						lat = obj.getDouble("latitude");
+						lon = obj.getDouble("longitude");
+						// result.add(obj.getString("zipcode"));
+						// System.out.println(cursor.next());
+					}
+				} finally {
+					cursor.close();
+				}
 
+				System.out.println(zip);
+				System.out.println(lat);
+				System.out.println(lon);
+				System.out.println("");
+
+				// build a hashmap of zipcodes that meet the criteria
+				HashMap<Integer, Double> zipDist = new HashMap<Integer, Double>();
+				DBCursor cursor2 = coll.find();
+				Double maxDistance = 12.0;
+				try {
+					// for(int i= 0; i < 50; i++){
+					while (cursor2.hasNext()) {
+						DBObject obj = (DBObject) cursor2.next();
+						Double distance = ZipDistCalc.calcDistance(lat, lon,
+								(Double)obj.get("latitude"), (Double)(obj.get("longitude")));
+						if (distance < maxDistance) {
+							System.out.println("(Integer)obj.get(\"zipcode\")   "
+									+ (Integer)(obj.get("zipcode")));
+							zipDist.put((Integer)(obj.get("zipcode")), distance);
+						}
+					}
+				} finally {
+					cursor2.close();
+				}
+				
+				return zipDist;
 	}
 
 }

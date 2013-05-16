@@ -71,6 +71,35 @@ public class DataManage {
 
 	}
 
+	public static void makeCAzips() {
+		File inFile = new File("zipLocs.csv");
+		File outFile = new File("CAzipLocs.csv");
+
+		if (inFile.isFile()) {
+			try {
+				BufferedReader br = new BufferedReader(new FileReader(inFile));
+				BufferedWriter bw = new BufferedWriter(new FileWriter(outFile));
+
+				String line = br.readLine(); // prime the reader with the first line
+				
+				while (line != null) {
+	
+					if (line.startsWith("9")) {
+						bw.append(line);
+						bw.append("\n");
+					}
+
+					line = br.readLine();
+				}
+
+				br.close();
+				bw.close();
+			} catch (Exception ex) {
+				ex.printStackTrace();
+			}
+		}
+	}
+	
 	public static String readFileInput(File file) {
 		String everything = "";
 		if (file.isFile()) {
@@ -220,6 +249,51 @@ public class DataManage {
 		MongoClient mongoClient = new MongoClient("localhost");
 
 		DB db = mongoClient.getDB("ziptest");
+
+		DBCollection coll = db.getCollection("zipcodeLocations");
+
+		Integer zip = 0;
+		Double lat = 0.0;
+		Double lon = 0.0;
+
+		// load the zipcode lat-lon table into mongodb database ziptest
+		File inFile = new File("zipLocs.csv");
+		if (inFile.isFile()) {
+			coll.drop();
+			try {
+				BufferedReader br = new BufferedReader(new FileReader(inFile));
+				String line = br.readLine();
+
+				while (line != null) {
+					// for(int i = 0; i < 1000; i++){
+					zip = Integer.valueOf(line.substring(0, 5));
+					lat = Double.valueOf(line.substring(6, 15));
+					lon = Double.valueOf(line.substring(16, 26).trim());
+
+					BasicDBObject doc = new BasicDBObject("zipcode", zip)
+							.append("latitude", lat).append("longitude", lon);
+
+					coll.insert(doc);
+					line = br.readLine();
+				}
+
+				br.close();
+
+			} catch (Exception ex) {
+				ex.printStackTrace();
+			}
+		} else {
+			System.out.println("could not find file");
+		}
+
+	}
+	
+	public static void loadZipFileIntoMassive() throws Exception {
+		System.out.println("loading zipdata to DB");
+
+		MongoClient mongoClient = new MongoClient("localhost");
+
+		DB db = mongoClient.getDB("massive");
 
 		DBCollection coll = db.getCollection("zipcodeLocations");
 
